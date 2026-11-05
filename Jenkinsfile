@@ -1,48 +1,75 @@
 pipeline {
-  agent any
-  parameters {
-    choice(name: 'SERVICE', choices: ['user-service', 'product-service', 'order-service'], description: 'Service to deploy')
-  }
-  environment {
-    APP_HOST = 'ubuntu@APP_VM_PRIVATE_IP'
-    APP_IP   = 'APP_VM_PRIVATE_IP'
-  }
-  stages {
-    stage('Checkout') {
-      steps { git branch: 'main', url: 'https://github.com/yourorg/cinema-booking.git' }
+    agent any
+
+    environment {
+        PROJECT_DIR = "${WORKSPACE}"
     }
-    stage('Lint / Compile') {
-      steps { sh "python3 -m py_compile ${params.SERVICE}/main.py" }
-    }
-    stage('Package') {
-      steps { sh "tar czf ${params.SERVICE}.tgz -C ${params.SERVICE} main.py requirements.txt" }
-    }
-    stage('Deploy') {
-      steps {
-        sshagent(['app-vm-ssh-key']) {
-          sh """
-            scp -o StrictHostKeyChecking=no ${params.SERVICE}.tgz \$APP_HOST:/tmp/
-            ssh -o StrictHostKeyChecking=no \$APP_HOST '
-              sudo mkdir -p /opt/apps/${params.SERVICE} &&
-              sudo tar xzf /tmp/${params.SERVICE}.tgz -C /opt/apps/${params.SERVICE} &&
-              cd /opt/apps/${params.SERVICE} &&
-              (test -d venv || sudo python3 -m venv venv) &&
-              sudo venv/bin/pip install -q -r requirements.txt &&
-              sudo chown -R appuser:appuser /opt/apps/${params.SERVICE} &&
-              sudo systemctl restart cinema@${params.SERVICE}
-            '
-          """
+
+    stages {
+
+        stage('Checkout') {
+            steps {
+                checkout scm
+            }
         }
-      }
-    }
-    stage('Health Check') {
-      steps {
-        script {
-          def ports = ['user-service': 8081, 'product-service': 8082, 'order-service': 8083]
-          sh "sleep 8 && curl -f http://\$APP_IP:${ports[params.SERVICE]}/health"
+
+        stage('Validate Project Structure') {
+            steps {
+                sh '''
+                    test -f user-service/main.py
+                    test -f product-service/main.py
+                    test -f order-service/main.py
+
+                    test -f frontend/index.html
+                    test -f frontend/style.css
+                    test -f frontend/app.js
+
+                    test -f deploy/db-setup.sql
+
+                    echo "Project structure validation successful"
+                '''
+            }
         }
-      }
+
+        stage('Python Syntax Check') {
+            steps {
+                sh '''
+                    python3 -m py_compile \
+                        user-service/main.py \
+                        product-service/main.py \
+                        order-service/main.py
+
+                    echo "Python syntax validation successful"
+                '''
+            }
+        }
+
+        stage('Install Dependencies') {
+            steps {
+                sh '''
+                    python3 -m venv .venv-user
+                    .venv-user/bin/pip install \
+                        -r user-service/requirements.txt
+
+                    python3 -m venv .venv-product
+                    .venv-product/bin/pip install \
+                        -r product-service/requirements.txt
+
+                    python3 -m venv .venv-order
+                    .venv-order/bin/pip install \
+                        -r order-service/requirements.txt
+                '''
+            }
+        }
     }
-  }
-  post { always { cleanWs() } }
+
+    post {
+        success {
+            echo 'Cinema Booking CI pipeline completed successfully!'
+        }
+
+        failure {
+            echo 'Cinema Booking CI pipeline failed. Check Console Output.'
+        }
+    }
 }
