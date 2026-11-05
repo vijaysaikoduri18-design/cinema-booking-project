@@ -1,1 +1,79 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CineBook - Movie Tickets</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
 
+<header>
+    <div class="logo">🎬 CineBook</div>
+    <nav>
+        <a href="#home">Home</a>
+        <a href="#movies">Movies</a>
+        <a href="#bookings">My Bookings</a>
+    </nav>
+    <div id="auth-area">
+        <button onclick="showLogin()">Login</button>
+        <button onclick="showRegister()">Register</button>
+    </div>
+</header>
+
+<section class="hero" id="home">
+    <h1>Experience Movies Like Never Before</h1>
+    <p>Book your favourite movie tickets online.</p>
+    <a href="#movies" class="hero-btn">Explore Movies</a>
+</section>
+
+<section class="container" id="auth-section">
+    <div class="auth-card" id="auth-card" hidden>
+        <h2 id="auth-title">Login</h2>
+        <form id="auth-form">
+            <input id="name" placeholder="Full name" hidden>
+            <input id="email" type="email" placeholder="Email" required>
+            <input id="password" type="password"
+                   placeholder="Password" required minlength="8">
+            <button type="submit" id="auth-submit">Login</button>
+        </form>
+        <p id="auth-message"></p>
+    </div>
+</section>
+
+<section class="container" id="movies">
+    <h2>Now Showing</h2>
+    <div id="movie-list" class="movie-grid">
+        Loading movies...
+    </div>
+</section>
+
+<section class="container" id="show-section" hidden>
+    <h2 id="show-heading">Available Shows</h2>
+    <div id="show-list"></div>
+</section>
+
+<section class="container" id="seat-section" hidden>
+    <h2>Select Your Seats</h2>
+    <div class="screen">SCREEN</div>
+    <div id="seat-map" class="seat-map"></div>
+    <p id="seat-total"></p>
+    <button id="book-button" onclick="bookTickets()">
+        Confirm Booking
+    </button>
+</section>
+
+<section class="container" id="bookings">
+    <h2>My Bookings</h2>
+    <div id="booking-list">
+        Please log in to view your bookings.
+    </div>
+</section>
+
+<footer>
+    <p>© 2026 CineBook. Your movie, your experience.</p>
+</footer>
+
+<script src="app.js"></script>
+</body>
+</html>
